@@ -41,6 +41,10 @@
             width: 90%;
             max-width: 1000px;
             text-align: center;
+            /* 启用 Flex 布局来并排放置两个全局按钮 */
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* 按钮之间的间距 */
         }
 
         /* 图表容器 - PC端限制宽度，手机端适应 */
@@ -51,6 +55,10 @@
             margin-bottom: 20px;
             padding: 10px;
             background-color: #222222; 
+            /* 图表四边加粗 */
+            border: 3px solid #777777; 
+            border-radius: 8px;
+            box-sizing: border-box;
         }
         
         /* ------------------------------------------------ */
@@ -122,7 +130,7 @@
         .controls-table th:first-child {
             background-color: #444444; 
             padding: 10px 5px;
-            /* 左上角留空，不再需要对角线样式 */
+            /* 左上角留空 */
         }
 
         /* 滚动区域的普通单元格 */
@@ -231,7 +239,7 @@
             min-height: 35px;
             width: 150px;
             display: flex; 
-            margin: 0 auto;
+            margin: 0; 
             background-color: #666666;
             border-radius: 4px;
             font-size: 14px;
@@ -276,7 +284,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 手机适配样式 (小于 768px 时激活) - 尺寸恢复与微调 */
+        /* 手机适配样式 (小于 768px 时激活) */
         /* ------------------------------------------------ */
         @media (max-width: 768px) {
             
@@ -286,8 +294,8 @@
 
             /* 1. 缩小行高 (单元格高度) */
             .controls-table th, .controls-table td {
-                height: 30px; /* 恢复手机行高 */
-                font-size: 10px; /* 恢复手机字体大小 */
+                height: 30px; 
+                font-size: 10px; 
             }
 
             /* 滚动区域单元格 padding */
@@ -297,22 +305,22 @@
 
             /* 2. 确保内部元素高度同步缩小 */
             .cell-container, .toggle-cell-container, .no-data-cell {
-                min-height: 28px; /* 略小于行高 30px */
+                min-height: 28px; 
             }
             
             .control-button {
                 font-size: 9px; 
-                padding: 2px 1px; /* 手机按钮内边距 */
+                padding: 2px 1px; 
             }
 
             .toggle-all-btn {
                 font-size: 9px;
-                padding: 2px 1px; /* 手机“全部”按钮内边距与小按钮统一 */
+                padding: 2px 1px; 
             }
             
             .cell-container, .toggle-cell-container {
-                padding: 1px; /* 手机容器外层内边距 */
-                gap: 2px; /* 手机按钮间隙 */
+                padding: 1px; 
+                gap: 2px; 
             }
 
             /* 格式列和开关列宽度微调 */
@@ -331,6 +339,14 @@
                 margin-left: 1px; 
                 border-width: 1px; 
             }
+
+            .global-controls {
+                gap: 10px;
+            }
+            .global-btn {
+                width: 100px;
+                font-size: 12px;
+            }
         }
     </style>
 </head>
@@ -347,7 +363,8 @@
     </div>
 
     <div class="global-controls">
-        <button id="globalShowAllBtn" class="global-btn">显示全部</button>
+        <button id="globalShowAllBtn" class="global-btn active">显示全部</button>
+        <button id="toggleCrosshairBtn" class="global-btn">显示十字光标</button>
     </div>
 
     <div class="chart-container">
@@ -593,6 +610,146 @@
 
         let rateVMAFChart;
 
+        // -----------------------------------------------------------
+        // 4. 十字光标插件 (仅负责绘制)
+        // -----------------------------------------------------------
+        const crosshairPlugin = {
+            id: 'customCrosshair',
+            afterDraw: (chart, args, options) => {
+                if (!options.enabled || !chart.crosshairCoords) return;
+
+                const currentParams = getChartParams();
+                const { ctx } = chart;
+                const { x, y } = chart.crosshairCoords;
+                const chartArea = chart.chartArea;
+                
+                // 检查鼠标是否在绘图区域内
+                if (x < chartArea.left || x > chartArea.right || y < chartArea.top || y > chartArea.bottom) {
+                    return;
+                }
+
+                ctx.save();
+                ctx.beginPath();
+                
+                // 绘制垂直虚线 (X 轴)
+                ctx.strokeStyle = options.lineColor;
+                ctx.lineWidth = options.lineWidth;
+                ctx.setLineDash(options.lineDash);
+                ctx.moveTo(x, chartArea.top);
+                ctx.lineTo(x, chartArea.bottom);
+                
+                // 绘制水平虚线 (Y 轴)
+                ctx.moveTo(chartArea.left, y);
+                ctx.lineTo(chartArea.right, y);
+                ctx.stroke();
+
+                // 修复：重置线型，确保标签框描边为实线
+                ctx.setLineDash([]); 
+                
+                // 计算坐标轴上的值
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                const xValue = xScale.getValueForPixel(x);
+                const yValue = yScale.getValueForPixel(y);
+                
+                // 绘制坐标值标签
+                const drawCoordLabel = (value, scale, coord, isX) => {
+                    // 格式化数值 (X轴取整，Y轴取三位小数)
+                    const labelText = isX ? `${Math.round(value)}` : `${value.toFixed(3)}`;
+                    const fontSize = currentParams.tickSize;
+                    const labelColor = options.labelColor; 
+                    const bgColor = options.labelBgColor;   
+                    
+                    ctx.font = `${fontSize}px ${CHART_FONT_FAMILY}`;
+                    ctx.textBaseline = 'middle'; 
+                    
+                    const textWidth = ctx.measureText(labelText).width;
+                    const padding = 5;
+                    const boxWidth = textWidth + 2 * padding;
+                    const boxHeight = fontSize + 2 * padding;
+                    
+                    ctx.fillStyle = bgColor;
+                    ctx.strokeStyle = labelColor; 
+                    ctx.lineWidth = 1;
+
+                    if (isX) {
+                        // X轴 (底部)
+                        const boxX = coord - boxWidth / 2;
+                        const boxY = scale.top; 
+                        
+                        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+                        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+                        
+                        ctx.fillStyle = labelColor;
+                        ctx.fillText(labelText, coord - textWidth / 2, boxY + boxHeight / 2); 
+                    } else {
+                        // Y轴 (左侧)
+                        const boxX = scale.right - boxWidth;
+                        const boxY = coord - boxHeight / 2;
+                        
+                        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+                        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+                        
+                        ctx.fillStyle = labelColor;
+                        ctx.fillText(labelText, boxX + padding, boxY + boxHeight / 2); 
+                    }
+                };
+
+                // 绘制 X 轴标签
+                drawCoordLabel(xValue, xScale, x, true);
+
+                // 绘制 Y 轴标签
+                drawCoordLabel(yValue, yScale, y, false);
+                
+                ctx.restore();
+            }
+        };
+        
+        // -----------------------------------------------------------
+        // 5. 外部事件监听 (处理实时鼠标坐标，确保过滤生效)
+        // -----------------------------------------------------------
+
+        function addCrosshairEvents(chart) {
+            const canvas = chart.canvas;
+            
+            const mouseMoveHandler = (event) => {
+                const pos = Chart.helpers.getRelativePosition(event, chart);
+                
+                // 1. 始终存储实时鼠标坐标 (Filter callback 依赖于此)
+                chart.crosshairCoords = { x: pos.x, y: pos.y };
+
+                if (chart.options.plugins.customCrosshair.enabled) {
+                    // 启用十字光标：只画线，强制重绘，隐藏 Tooltip
+                    chart.draw(); 
+                } 
+                // 2. 关键：当十字光标禁用时，我们不再调用 setActiveElements/update()，
+                // 而是让 Chart.js 自身的事件处理逻辑来高效地管理 Tooltip。
+                // Tooltip 仍会读取 chart.crosshairCoords 来应用我们的过滤规则。
+            };
+            
+            const mouseOutHandler = () => {
+                // 鼠标移出图表区域时，始终清理坐标
+                chart.crosshairCoords = null; 
+
+                if (chart.options.plugins.customCrosshair.enabled) {
+                    // 启用十字光标时，重绘以清除十字线
+                    chart.draw();
+                } else {
+                    // 禁用十字光标时，强制隐藏 Tooltip
+                    chart.setActiveElements([]);
+                    chart.update();
+                }
+            };
+            
+            // 绑定事件
+            canvas.addEventListener('mousemove', mouseMoveHandler);
+            canvas.addEventListener('mouseout', mouseOutHandler);
+        }
+
+        // Tooltip 过滤阈值
+        const VMAF_DISTANCE_THRESHOLD = 2.0; 
+        const RATE_DISTANCE_THRESHOLD = 1000; // Kbps
+
         function initializeChart() {
             const currentParams = getChartParams();
             const ctx = document.getElementById('rateVMAFChart').getContext('2d');
@@ -604,7 +761,59 @@
                     responsive: true,
                     maintainAspectRatio: true, 
                     aspectRatio: 1, 
-                    plugins: { legend: { display: false }, title: { display: false } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        title: { display: false },
+                        tooltip: {
+                            // 使用回调函数进行双轴过滤
+                            callbacks: {
+                                filter: function(tooltipItem, index, tooltipItems, chart) {
+                                    // 1. 获取实时鼠标位置 (由外部事件监听器捕获)
+                                    const mouseCoords = chart.crosshairCoords;
+                                    if (!mouseCoords) {
+                                        // 如果鼠标不在图表区域，不显示 tooltip
+                                        return false;
+                                    }
+
+                                    const xScale = chart.scales.x;
+                                    const yScale = chart.scales.y;
+
+                                    // 将鼠标的像素位置转换为数据值 (实时鼠标位置)
+                                    const mouseRate = xScale.getValueForPixel(mouseCoords.x);
+                                    const mouseVMAF = yScale.getValueForPixel(mouseCoords.y);
+                                    
+                                    // 2. 获取数据点的 X/Y 值
+                                    const pointRate = tooltipItem.parsed.x;
+                                    const pointVMAF = tooltipItem.parsed.y;
+                                    
+                                    // 3. 计算双轴差值
+                                    const rateDifference = Math.abs(pointRate - mouseRate);
+                                    const vmafDifference = Math.abs(pointVMAF - mouseVMAF);
+                                    
+                                    // 4. 应用双重限制：只有当码率和 VMAF 都在阈值内时才显示
+                                    const isVmafClose = vmafDifference <= VMAF_DISTANCE_THRESHOLD;
+                                    const isRateClose = rateDifference <= RATE_DISTANCE_THRESHOLD;
+
+                                    // 只有当命中点满足这两个条件时，才返回 true
+                                    return isVmafClose && isRateClose;
+                                }
+                            }
+                        },
+                        customCrosshair: {
+                            enabled: false,
+                            lineColor: '#BBBBBB', 
+                            lineWidth: 1,
+                            lineDash: [5, 5],
+                            labelColor: 'white', 
+                            labelBgColor: '#1a73e8' 
+                        }
+                    },
+                    interaction: {
+                        // *** 关键修正：改回 'point' 模式，允许选中多个点 ***
+                        mode: 'point', 
+                        intersect: false, 
+                        axis: 'xy'
+                    },
                     scales: {
                         x: { 
                             type: 'linear', 
@@ -617,6 +826,9 @@
                                     family: CHART_FONT_FAMILY 
                                 } 
                             }, 
+                            // 保持固定的 min/max 边界，防止轴自动缩放
+                            min: 0,
+                            max: 65000, 
                             ticks: { 
                                 color: '#E0E0E0', 
                                 font: { 
@@ -648,12 +860,16 @@
                             grid: { color: '#555555' } 
                         }
                     }
-                }
+                },
+                plugins: [crosshairPlugin]
             });
+            
+            // 立即添加外部事件监听器，修复十字光标功能和 Tooltip 过滤依赖的坐标
+            addCrosshairEvents(rateVMAFChart);
         }
         
         // -----------------------------------------------------------
-        // 4. 控制逻辑 
+        // 6. 控制逻辑 
         // -----------------------------------------------------------
 
         function getRowIndices(codec) {
@@ -736,9 +952,34 @@
             rateVMAFChart.update();
         }
 
+        /** 切换十字光标 */
+        function toggleCrosshair() {
+            if (!rateVMAFChart) return;
+
+            const crosshairBtn = document.getElementById('toggleCrosshairBtn');
+            const isActive = crosshairBtn.classList.contains('active');
+            const newState = !isActive;
+            
+            // 切换插件的启用状态
+            rateVMAFChart.options.plugins.customCrosshair.enabled = newState;
+            rateVMAFChart.crosshairCoords = null; // 清除旧坐标
+            
+            crosshairBtn.classList.toggle('active', newState);
+            
+            // 确保禁用十字光标时，Tooltip 依然能够正常工作
+            if (!newState) {
+                // 重新触发 Chart.js 的内置交互逻辑
+                rateVMAFChart.update(); 
+            } else {
+                // 启用十字光标时，隐藏 Tooltip
+                rateVMAFChart.setActiveElements([]);
+                rateVMAFChart.update();
+            }
+        }
+
 
         // -----------------------------------------------------------
-        // 5. 表格构建 (DOM操作)
+        // 7. 表格构建 (DOM操作)
         // -----------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             const controlsTable = document.getElementById('controlsTable');
@@ -888,7 +1129,9 @@
             // 6. 绑定全局按钮事件
             const globalBtn = document.getElementById('globalShowAllBtn');
             globalBtn.addEventListener('click', toggleAllCurves);
-            globalBtn.classList.add('active');
+            
+            const crosshairBtn = document.getElementById('toggleCrosshairBtn');
+            crosshairBtn.addEventListener('click', toggleCrosshair);
         });
     </script>
 
