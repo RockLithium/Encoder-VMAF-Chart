@@ -551,6 +551,11 @@
             return `rgba(128, 128, 128, ${alpha})`; 
         }
 
+         /** 格式化数字，添加千位分隔符 (逗号)。 */
+        function formatNumberWithCommas(number) {
+            return Math.round(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
         // -----------------------------------------------------------
         // 3. Chart.js 数据集配置 
         // -----------------------------------------------------------
@@ -655,7 +660,7 @@
                 // 绘制坐标值标签
                 const drawCoordLabel = (value, scale, coord, isX) => {
                     // 格式化数值 (X轴取整，Y轴取三位小数)
-                    const labelText = isX ? `${Math.round(value)}` : `${value.toFixed(3)}`;
+                    const labelText = isX ? formatNumberWithCommas(value) : `${value.toFixed(3)}`; 
                     const fontSize = currentParams.tickSize;
                     const labelColor = options.labelColor; 
                     const bgColor = options.labelBgColor;   
