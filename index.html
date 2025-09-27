@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>编码器性能曲线对比 (码率 vs VMAF) - 最终定制版</title>
+    <title>编码器性能曲线对比 (码率 vs VMAF)</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -100,7 +100,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 固定列样式 (左侧) - 修复移动端透明细线问题 */
+        /* 固定列样式 (左侧) */
         /* ------------------------------------------------ */
         .controls-table th:first-child, .controls-table td:first-child {
             width: 12%; 
@@ -111,7 +111,7 @@
             left: 0;
             z-index: 5; /* 确保固定列在滚动区域之上，并盖住边框 */
             
-            /* 固定列背景色 (与表头颜色保持一致) */
+            /* 固定列背景色 */
             background-color: #444444; 
             
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5); 
@@ -125,9 +125,9 @@
             /* 左上角留空，不再需要对角线样式 */
         }
 
-        /* 滚动区域的普通单元格 (恢复内边距) */
+        /* 滚动区域的普通单元格 */
         .controls-table td:not(:first-child) {
-            padding: 2px; /* 恢复少量内边距 */
+            padding: 2px; /* 少量内边距 */
         }
         
         /* 行开关列 (最后一列) - 固定宽度 */
@@ -135,9 +135,9 @@
             width: 8%;
             min-width: 80px;
         }
-        /* 行开关列的父单元格 (恢复少量内边距) */
+        /* 行开关列的父单元格  */
         .controls-table td:last-child {
-            padding: 2px; /* 保持与普通数据单元格一致的外层内边距 */
+            padding: 2px; 
         }
         
         /* ------------------------------------------------ */
@@ -158,7 +158,7 @@
             box-sizing: border-box; 
         }
 
-        /* “全部”按钮的容器 (新加入，确保间隙统一) */
+        /* “全部”按钮 */
         .toggle-cell-container {
             display: flex;
             flex-direction: row; 
@@ -356,7 +356,7 @@
 
     <script>
         // -----------------------------------------------------------
-        // 1. 数据配置 (保持不变)
+        // 1. 数据配置
         // -----------------------------------------------------------
         const rawData = {
             'x264': [
@@ -455,7 +455,7 @@
         };
 
         // -----------------------------------------------------------
-        // 2. 颜色主题配置 (保持不变)
+        // 2. 颜色主题配置
         // -----------------------------------------------------------
         
         const COLOR_MAP = {
@@ -535,7 +535,7 @@
         }
 
         // -----------------------------------------------------------
-        // 3. Chart.js 数据集配置 (保持不变)
+        // 3. Chart.js 数据集配置 
         // -----------------------------------------------------------
 
         const CHART_FONT_FAMILY = "'Ubuntu', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif";
@@ -653,7 +653,7 @@
         }
         
         // -----------------------------------------------------------
-        // 4. 控制逻辑 (保持不变)
+        // 4. 控制逻辑 
         // -----------------------------------------------------------
 
         function getRowIndices(codec) {
