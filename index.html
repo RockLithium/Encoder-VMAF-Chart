@@ -6,9 +6,10 @@
     <title>编码器性能曲线对比 (码率 vs VMAF)</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         /* ------------------------------------------------ */
-        /* 全局主题样式 */
+        /* 全局主题样式 (保持不变) */
         /* ------------------------------------------------ */
         body { 
             /* 全局设置: Ubuntu 优先用于英文/数字，苹方 (PingFang SC) 用于中文 */
@@ -48,7 +49,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 图表容器 (Canvas) 样式 - 固定网格高度 */
+        /* 图表容器 (Canvas) 样式 - 固定网格高度 (保持不变) */
         /* ------------------------------------------------ */
         .chart-container { 
             width: 90%; 
@@ -67,7 +68,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 自定义图例容器样式 - 满足固定 5 列的要求 */
+        /* 自定义图例容器样式 - 满足固定 5 列的要求 (保持不变) */
         /* ------------------------------------------------ */
         .custom-legend-container {
             width: 90%;
@@ -101,8 +102,6 @@
             font-size: 14px; /* 默认字体大小 */
         }
         
-        /* 关键修改：取消 .hidden 样式，由 JS 直接设置 display: none */
-
         .legend-item:hover {
             background-color: #666666;
         }
@@ -166,7 +165,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 固定列样式 (左侧) */
+        /* 固定列样式 (左侧) (保持不变) */
         /* ------------------------------------------------ */
         .controls-table th:first-child, .controls-table td:first-child {
             width: 12%; 
@@ -207,7 +206,7 @@
         }
         
         /* ------------------------------------------------ */
-        /* 交互式按钮样式 (统一间隙) */
+        /* 交互式按钮样式 (统一间隙) (保持不变) */
         /* ------------------------------------------------ */
 
         /* 曲线组容器 (用于小按钮) */
@@ -342,7 +341,7 @@
         }
 
         /* ------------------------------------------------ */
-        /* 手机适配样式 (小于 768px 时激活) */
+        /* 手机适配样式 (小于 768px 时激活) (保持不变) */
         /* ------------------------------------------------ */
         @media (max-width: 768px) {
             
@@ -432,6 +431,7 @@
     <div class="global-controls">
         <button id="globalShowAllBtn" class="global-btn active">显示全部</button>
         <button id="toggleCrosshairBtn" class="global-btn">显示十字光标</button>
+        <button id="saveImageBtn" class="global-btn">保存图片</button>
     </div>
 
     <div class="chart-container">
@@ -442,7 +442,7 @@
 
     <script>
         // -----------------------------------------------------------
-        // 1. 数据配置
+        // 1. 数据配置 (保持不变)
         // -----------------------------------------------------------
         const rawData = {
             'x264': [
@@ -541,7 +541,7 @@
         };
 
         // -----------------------------------------------------------
-        // 2. 颜色主题配置
+        // 2. 颜色主题配置 (保持不变)
         // -----------------------------------------------------------
         
         const COLOR_MAP = {
@@ -626,7 +626,7 @@
         }
 
         // -----------------------------------------------------------
-        // 3. Chart.js 数据集配置 
+        // 3. Chart.js 数据集配置 (保持不变)
         // -----------------------------------------------------------
 
         const CHART_FONT_FAMILY = "'Ubuntu', 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif";
@@ -685,7 +685,7 @@
         let rateVMAFChart;
 
         // -----------------------------------------------------------
-        // 4. 十字光标插件 (仅负责绘制)
+        // 4. 十字光标插件 (仅负责绘制) (保持不变)
         // -----------------------------------------------------------
         const crosshairPlugin = {
             id: 'customCrosshair',
@@ -780,7 +780,7 @@
         };
         
         // -----------------------------------------------------------
-        // 5. 外部事件监听 (处理实时鼠标坐标，确保过滤生效)
+        // 5. 外部事件监听 (处理实时鼠标坐标，确保过滤生效) (保持不变)
         // -----------------------------------------------------------
 
         function addCrosshairEvents(chart) {
@@ -819,7 +819,7 @@
             canvas.addEventListener('mouseout', mouseOutHandler);
         }
 
-        // 渲染并更新自定义图例
+        // 渲染并更新自定义图例 (保持不变)
         function renderCustomLegend() {
             const container = document.getElementById('customLegendContainer');
             if (!container || !rateVMAFChart) return;
@@ -886,8 +886,16 @@
 
         function initializeChart() {
             const currentParams = getChartParams();
-            const ctx = document.getElementById('rateVMAFChart').getContext('2d');
+            const canvas = document.getElementById('rateVMAFChart');
+            const ctx = canvas.getContext('2d');
             
+            // 解决 Chart.js canvas 模糊问题：设置 Chart.js 的设备像素比为 4
+            Chart.defaults.devicePixelRatio = 4; // 设置为4倍，与html2canvas的scale一致
+            // 重置 canvas 元素，确保新的 devicePixelRatio 生效
+            canvas.width = canvas.clientWidth * Chart.defaults.devicePixelRatio;
+            canvas.height = canvas.clientHeight * Chart.defaults.devicePixelRatio;
+            ctx.scale(Chart.defaults.devicePixelRatio, Chart.defaults.devicePixelRatio);
+
             rateVMAFChart = new Chart(ctx, {
                 type: 'scatter', 
                 data: { datasets: chartDatasets },
@@ -1006,7 +1014,7 @@
         }
         
         // -----------------------------------------------------------
-        // 6. 控制逻辑 (更新后需调用 renderCustomLegend())
+        // 6. 控制逻辑 (更新后需调用 renderCustomLegend()) (保持不变)
         // -----------------------------------------------------------
 
         function getRowIndices(codec) {
@@ -1115,10 +1123,131 @@
                 rateVMAFChart.update();
             }
         }
+        
+        // -----------------------------------------------------------
+        // 7. 保存图片逻辑 - 修正：统一宽度和添加间隙 (V4.0)
+        // -----------------------------------------------------------
+        
+        // 用于触发下载的辅助函数
+        function downloadURI(uri, name) {
+            const link = document.createElement('a');
+            link.download = name;
+            link.href = uri;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /**
+         * 保存图片函数：渲染图表和图例，四倍超采样并裁剪。
+         */
+        async function saveImage() {
+            const chartContainer = document.querySelector('.chart-container');
+            const legendContainer = document.getElementById('customLegendContainer');
+            
+            // 1. 获取图表容器的实际宽度 (用于统一图表和图例的宽度)
+            const chartWidth = chartContainer.offsetWidth; 
+            const finalImagePadding = 20; // 最终截图内容周围的边距 (20px)
+
+            // 确保截图前图表和图例处于最新的渲染状态
+            rateVMAFChart.draw(); 
+            renderCustomLegend();
+
+            // 2. 克隆 Chart Container 和 Legend Container
+            const clonedChartContainer = chartContainer.cloneNode(true);
+            const clonedLegendContainer = legendContainer.cloneNode(true);
+            
+            // 3. 复制 Canvas 内容 (高分辨率)
+            const originalCanvas = chartContainer.querySelector('canvas');
+            const clonedCanvas = clonedChartContainer.querySelector('canvas');
+            if (originalCanvas && clonedCanvas) {
+                // 确保克隆的 canvas 尺寸与高分辨率绘制的原始 canvas 匹配
+                clonedCanvas.width = originalCanvas.width;
+                clonedCanvas.height = originalCanvas.height;
+                const clonedCtx = clonedCanvas.getContext('2d');
+                // 将原始的高分辨率内容绘制到克隆的 canvas 上
+                clonedCtx.drawImage(originalCanvas, 0, 0); 
+                // 恢复缩放，防止后续 html2canvas 渲染出错
+                clonedCtx.scale(1 / Chart.defaults.devicePixelRatio, 1 / Chart.defaults.devicePixelRatio); 
+            }
+            
+            // 4. 应用关键样式：显式复制边框、背景、内边距，并设置统一宽度
+            const applyFinalStyles = (clonedEl, originalEl) => {
+                // 关键修改: 强制统一宽度为图表容器的实际像素宽度
+                clonedEl.style.width = `${chartWidth}px`; 
+                clonedEl.style.maxWidth = 'none';
+                clonedEl.style.margin = '0';
+                clonedEl.style.boxSizing = 'border-box';
+                
+                // 2. 显式复制边框、背景、内边距样式 (确保 html2canvas 渲染)
+                const style = getComputedStyle(originalEl);
+                clonedEl.style.border = style.border;
+                clonedEl.style.borderRadius = style.borderRadius;
+                clonedEl.style.padding = style.padding;
+                clonedEl.style.backgroundColor = style.backgroundColor;
+                
+                // 对于 chartContainer，需要修复 canvas 的父容器宽度以适应统一宽度
+                if (clonedEl === clonedChartContainer) {
+                     const canvasEl = clonedEl.querySelector('canvas');
+                     if (canvasEl) {
+                        // 确保 canvas 宽度保持不变 (aspect-ratio: 1 依赖这个)
+                        canvasEl.style.width = style.width;
+                        canvasEl.style.height = style.height;
+                     }
+                }
+            };
+            
+            applyFinalStyles(clonedChartContainer, chartContainer);
+            applyFinalStyles(clonedLegendContainer, legendContainer);
+
+
+            // 5. 创建截图根容器 (TempDiv)，用于居中、间隙和添加边距
+            const tempDiv = document.createElement('div');
+            tempDiv.id = 'screenshot-root';
+            // 使用 Flex 布局垂直堆叠，并实现居中
+            tempDiv.style.display = 'flex';
+            tempDiv.style.flexDirection = 'column';
+            tempDiv.style.alignItems = 'center'; // 水平居中
+            tempDiv.style.gap = '10px'; // **关键修改: 添加 10px 垂直间隙**
+            tempDiv.style.padding = `${finalImagePadding}px`; // 四周添加边距
+            tempDiv.style.backgroundColor = getComputedStyle(document.body).backgroundColor;
+            tempDiv.style.position = 'absolute'; // 确保它不影响页面布局
+            tempDiv.style.top = '0';
+            tempDiv.style.left = '0';
+            tempDiv.style.width = 'fit-content'; // 让根容器紧贴内容 (由子元素统一宽度)
+
+            // 6. 组织结构: 克隆元素作为子元素添加到 tempDiv
+            tempDiv.appendChild(clonedChartContainer);
+            tempDiv.appendChild(clonedLegendContainer);
+            
+            document.body.appendChild(tempDiv);
+            
+            // 7. 执行截图
+            try {
+                const canvas = await html2canvas(tempDiv, {
+                    scale: 4, // 4x 超采样
+                    backgroundColor: getComputedStyle(document.body).backgroundColor,
+                    // 不指定 width/height，让 html2canvas 自动计算 tempDiv 的尺寸
+                    useCORS: true 
+                });
+
+                // 8. 转换为 PNG 并下载
+                const dataURL = canvas.toDataURL('image/png');
+                const filename = `Encoder_Perf_Curve.png`; // 固定文件名
+                downloadURI(dataURL, filename);
+
+            } catch (error) {
+                console.error('保存图片失败:', error);
+                alert('保存图片失败，请检查控制台了解详情。');
+            } finally {
+                // 9. 移除临时容器
+                document.body.removeChild(tempDiv);
+            }
+        }
 
 
         // -----------------------------------------------------------
-        // 7. 表格构建 (DOM操作)
+        // 8. 表格构建 (DOM操作) (保持不变)
         // -----------------------------------------------------------
         document.addEventListener('DOMContentLoaded', () => {
             const controlsTable = document.getElementById('controlsTable');
@@ -1275,6 +1404,10 @@
             
             const crosshairBtn = document.getElementById('toggleCrosshairBtn');
             crosshairBtn.addEventListener('click', toggleCrosshair);
+
+            // [新增加] 绑定保存图片按钮事件
+            const saveImageBtn = document.getElementById('saveImageBtn');
+            saveImageBtn.addEventListener('click', saveImage);
         });
     </script>
 
