@@ -47,22 +47,80 @@
             gap: 20px; /* 按钮之间的间距 */
         }
 
-        /* 图表容器 - PC端限制宽度，手机端适应 */
+        /* ------------------------------------------------ */
+        /* 图表容器 (Canvas) 样式 - 固定网格高度 */
+        /* ------------------------------------------------ */
         .chart-container { 
             width: 90%; 
             max-width: 960px; 
             margin-top: 30px; 
-            margin-bottom: 20px;
+            margin-bottom: 10px; /* 减少底部边距，给图例留空间 */
             padding: 10px;
             background-color: #222222; 
             /* 图表四边加粗 */
             border: 3px solid #777777; 
             border-radius: 8px;
             box-sizing: border-box;
+            
+            /* 关键修改：固定图表 canvas 的宽高比为 1:1，以确保图表网格高度固定 */
+            aspect-ratio: 1; 
+        }
+
+        /* ------------------------------------------------ */
+        /* 自定义图例容器样式 - 满足固定 5 列的要求 */
+        /* ------------------------------------------------ */
+        .custom-legend-container {
+            width: 90%;
+            max-width: 960px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #222222;
+            border: 3px solid #777777; /* 外部边框 */
+            border-radius: 8px;
+            box-sizing: border-box;
+            
+            /* 关键修改：使用 Grid 布局，固定 5 列等宽 */
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 8px;
+        }
+
+        .legend-item {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            padding: 5px 8px;
+            border-radius: 4px;
+            background-color: #444444; /* 默认背景色 */
+            transition: background-color 0.15s;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            border: 1px solid transparent;
+            font-size: 14px; /* 默认字体大小 */
+        }
+        
+        /* 关键修改：取消 .hidden 样式，由 JS 直接设置 display: none */
+
+        .legend-item:hover {
+            background-color: #666666;
+        }
+        
+
+        .legend-item .color-box {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+            flex-shrink: 0;
+            border-width: 2px;
+            border-style: solid;
+            box-sizing: border-box;
         }
         
         /* ------------------------------------------------ */
-        /* 表格控制区样式 */
+        /* 表格控制区样式 (保持不变) */
         /* ------------------------------------------------ */
         .controls-table-container {
             width: 90%;
@@ -347,6 +405,15 @@
                 width: 100px;
                 font-size: 12px;
             }
+
+            /* 手机端图例字体和边距调整 */
+            .custom-legend-container {
+                grid-template-columns: repeat(3, 1fr); /* 手机端改为 3 列 */
+                gap: 6px;
+            }
+            .legend-item {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
@@ -370,6 +437,8 @@
     <div class="chart-container">
         <canvas id="rateVMAFChart"></canvas>
     </div>
+    
+    <div id="customLegendContainer" class="custom-legend-container"></div>
 
     <script>
         // -----------------------------------------------------------
@@ -412,9 +481,9 @@
                 { x: 60150, y: 97.300 }
             ],
             'HEVC_QSV_V9': [
-                { x: 2075, y: 77.012 }, { x: 4100, y: 84.851 }, { x: 7090, y: 88.750 }, { x: 10100, y: 91.198 }, 
-                { x: 15150, y: 93.180 }, { x: 20010, y: 94.188 }, { x: 25100, y: 94.890 }, { x: 40100, y: 96.390 }, 
-                { x: 60110, y: 97.400 }
+                { x: 2023, y: 79.333 }, { x: 4027, y: 86.360 }, { x: 7001, y: 90.200 }, { x: 10106, y: 92.120 },
+                { x: 14997, y: 93.748 }, { x: 19999, y: 94.695 }, { x: 25045, y: 95.377 }, { x: 40099, y: 96.556 },
+                { x: 59933, y: 97.431 }
             ], 
             'HEVC_AMF_3.1': [
                 { x: 2003, y: 72.408 }, { x: 4011, y: 80.491 }, { x: 7010, y: 85.613 }, { x: 10013, y: 88.530 }, 
@@ -729,7 +798,6 @@
                 } 
                 // 2. 关键：当十字光标禁用时，我们不再调用 setActiveElements/update()，
                 // 而是让 Chart.js 自身的事件处理逻辑来高效地管理 Tooltip。
-                // Tooltip 仍会读取 chart.crosshairCoords 来应用我们的过滤规则。
             };
             
             const mouseOutHandler = () => {
@@ -751,6 +819,67 @@
             canvas.addEventListener('mouseout', mouseOutHandler);
         }
 
+        // 渲染并更新自定义图例
+        function renderCustomLegend() {
+            const container = document.getElementById('customLegendContainer');
+            if (!container || !rateVMAFChart) return;
+
+            // 清空现有内容
+            container.innerHTML = ''; 
+
+            chartDatasets.forEach(dataset => {
+                // 仅包含有数据的曲线
+                if (dataset.data.length === 0) return; 
+
+                const item = document.createElement('div');
+                item.className = 'legend-item';
+                item.dataset.index = dataset.datasetIndex;
+                
+                // 1. 设置可见性状态
+                const isVisible = rateVMAFChart.isDatasetVisible(dataset.datasetIndex);
+                
+                // **核心修改：如果不可见，直接设置 display: none 使图例项消失**
+                if (!isVisible) {
+                    item.style.display = 'none'; 
+                }
+
+                // 2. 颜色方块
+                const colorBox = document.createElement('span');
+                colorBox.className = 'color-box';
+                // 使用 datasets 的颜色
+                colorBox.style.backgroundColor = dataset.backgroundColor; 
+                colorBox.style.borderColor = dataset.color; 
+                
+                // 3. 标签文本
+                const labelText = document.createElement('span');
+                labelText.textContent = dataset.label;
+                
+                item.appendChild(colorBox);
+                item.appendChild(labelText);
+                
+                // 4. 点击事件
+                item.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    const isCurrentlyVisible = rateVMAFChart.isDatasetVisible(index);
+                    
+                    rateVMAFChart.setDatasetVisibility(index, !isCurrentlyVisible);
+                    rateVMAFChart.update();
+                    
+                    // 重新渲染图例以更新状态
+                    renderCustomLegend(); 
+                    
+                    // 确保表格中的按钮状态也同步更新
+                    const individualBtn = document.querySelector(`.control-button[data-index="${index}"]`);
+                    if (individualBtn) {
+                        individualBtn.classList.toggle('active', !isCurrentlyVisible);
+                    }
+                });
+
+                container.appendChild(item);
+            });
+        }
+
+
         // Tooltip 过滤阈值
         const VMAF_DISTANCE_THRESHOLD = 2.0; 
         const RATE_DISTANCE_THRESHOLD = 1000; // Kbps
@@ -764,10 +893,14 @@
                 data: { datasets: chartDatasets },
                 options: {
                     responsive: true,
+                    // 因为我们通过 CSS 设置了 chart-container 的 aspect-ratio: 1，所以这里保持 true
                     maintainAspectRatio: true, 
                     aspectRatio: 1, 
                     plugins: { 
-                        legend: { display: false }, 
+                        // 禁用内置图例，使用自定义 HTML 图例
+                        legend: { 
+                            display: false, 
+                        }, 
                         title: { display: false },
                         tooltip: {
                             // 使用回调函数进行双轴过滤
@@ -814,7 +947,6 @@
                         }
                     },
                     interaction: {
-                        // *** 关键修正：改回 'point' 模式，允许选中多个点 ***
                         mode: 'point', 
                         intersect: false, 
                         axis: 'xy'
@@ -831,9 +963,9 @@
                                     family: CHART_FONT_FAMILY 
                                 } 
                             }, 
-                            // 保持固定的 min/max 边界，防止轴自动缩放
+                            // 横坐标最大值改为 70000
                             min: 0,
-                            max: 65000, 
+                            max: 70000, 
                             ticks: { 
                                 color: '#E0E0E0', 
                                 font: { 
@@ -874,7 +1006,7 @@
         }
         
         // -----------------------------------------------------------
-        // 6. 控制逻辑 
+        // 6. 控制逻辑 (更新后需调用 renderCustomLegend())
         // -----------------------------------------------------------
 
         function getRowIndices(codec) {
@@ -921,6 +1053,7 @@
 
             button.classList.toggle('active', newState);
             rateVMAFChart.update();
+            renderCustomLegend(); // 更新自定义图例
         }
 
         /** 切换全部曲线 (全局按钮) */
@@ -955,6 +1088,7 @@
             globalBtn.classList.toggle('active', newState);
             
             rateVMAFChart.update();
+            renderCustomLegend(); // 更新自定义图例
         }
 
         /** 切换十字光标 */
@@ -992,14 +1126,17 @@
             // 1. 初始化 Chart
             initializeChart();
 
-            // 2. 生成表头 (左上角留空)
+            // 2. 首次渲染自定义图例 (在表格加载前)
+            renderCustomLegend();
+
+            // 3. 生成表头 (左上角留空)
             let headerHtml = '<thead><tr><th></th>'; 
             COLUMN_HEADERS.forEach(header => { headerHtml += `<th>${header}</th>`; });
             headerHtml += `<th>行开关</th></tr></thead><tbody>`;
             controlsTable.innerHTML = headerHtml;
 
 
-            // 3. 生成表格内容
+            // 4. 生成表格内容
             ROW_HEADERS.forEach(codec => {
                 const row = controlsTable.insertRow();
                 const headerCell = row.insertCell();
@@ -1041,6 +1178,7 @@
                                         rateVMAFChart.setDatasetVisibility(index, !isVisible);
                                         rateVMAFChart.update();
                                         this.classList.toggle('active', !isVisible);
+                                        renderCustomLegend(); // 更新自定义图例
                                     });
                                 } else {
                                     // 无数据的按钮
@@ -1093,7 +1231,7 @@
                 }
             });
 
-            // 4. 插入列开关行 (表尾)
+            // 5. 插入列开关行 (表尾)
             const footerRow = controlsTable.insertRow();
             const footerHeaderCell = footerRow.insertCell();
             footerHeaderCell.innerHTML = '<strong>列开关</strong>'; 
@@ -1123,7 +1261,7 @@
                 }
             });
             
-            // 5. 最后一个单元格留空
+            // 6. 最后一个单元格留空
             const lastCell = footerRow.insertCell();
             const noDataCellEnd = document.createElement('div');
             noDataCellEnd.className = 'no-data-cell';
@@ -1131,7 +1269,7 @@
             lastCell.appendChild(noDataCellEnd);
 
             
-            // 6. 绑定全局按钮事件
+            // 7. 绑定全局按钮事件
             const globalBtn = document.getElementById('globalShowAllBtn');
             globalBtn.addEventListener('click', toggleAllCurves);
             
