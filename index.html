@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>编码器性能曲线对比 (码率 vs VMAF)</title>
+    <title>编码器性能对比</title>
     <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -30,7 +30,7 @@
         }
         p {
             color: #AAAAAA;
-            margin-top: 0;
+            margin-top: 10px;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -46,6 +46,42 @@
             display: flex;
             justify-content: center;
             gap: 20px; /* 按钮之间的间距 */
+        }
+
+        /* ------------------------------------------------ */
+        /* 导航按钮样式 */
+        /* ------------------------------------------------ */
+        .nav-buttons-container {
+            /* 让按钮居中显示，并在按钮容器上下增加间距 */
+            display: flex;
+            justify-content: center;
+            gap: 20px; /* 按钮之间的间距 */
+            margin: 0px auto 20px auto; 
+            width: 100%;
+            max-width: 960px;
+        }
+
+        .nav-button {
+            /* 链接按钮的基本样式 */
+            text-decoration: none;
+            color: #E0E0E0; /* 文本颜色 */
+            background-color: #333333; 
+            border: 2px solid #505050;
+            padding: 5px 3px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            width: 120px; 
+            text-align: center; 
+            display: inline-block; 
+            transition: background-color 0.3s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .nav-button:hover {
+            background-color: #444444; 
+            border-color: #e0e0e0; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
         }
 
         /* ------------------------------------------------ */
@@ -119,7 +155,7 @@
         }
         
         /* ------------------------------------------------ */
-        /* 表格控制区样式 (保持不变) */
+        /* 表格控制区样式 */
         /* ------------------------------------------------ */
         .controls-table-container {
             width: 90%;
@@ -418,10 +454,16 @@
 </head>
 <body>
 
-    <h1>编码器性能曲线对比 (平均码率 vs 平均VMAF)</h1>
+    <h1>编码器性能对比</h1>
     <p>
-        使用表格矩阵控制区切换不同编码器和格式的 VMAF-码率曲线。
+        使用表格矩阵控制区切换不同编码器和格式的 VMAF-码率曲线。<br>
+        预设采用尽可能高质量的预设，具体预设可点击下方按钮查看。
     </p>
+    
+    <div class="nav-buttons-container">
+            <a href="presets.html" class="nav-button">查看编码器参数</a>
+            <a href="data.html" class="nav-button">查看数据</a>
+        </div>
 
     <div class="controls-table-container">
         <table class="controls-table" id="controlsTable">
@@ -901,9 +943,13 @@
                 data: { datasets: chartDatasets },
                 options: {
                     responsive: true,
-                    // 因为我们通过 CSS 设置了 chart-container 的 aspect-ratio: 1，所以这里保持 true
                     maintainAspectRatio: true, 
                     aspectRatio: 1, 
+                    layout: {
+                        padding: {
+                            right: 50 // 将右侧内边距设置为 40px
+                        }
+                    },
                     plugins: { 
                         // 禁用内置图例，使用自定义 HTML 图例
                         legend: { 
