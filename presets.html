@@ -233,6 +233,7 @@
     <p>所有视频均由使用Prores 422 HQ压缩的3840x2160 60fps HDR 10bit 422原片压制而来，故全部使用了 -pix_fmt yuv420p10le指令将其转为10bit 420 HDR。</p>
     <p>由于CPU算力不足，软件解码ProRes速度小于编码器编码速度，第九代QSV编码器在Ultra 5 125H上和HEVC_AMF_4.0在Ryzen 7 7840H上的测得速率相比其极限速率偏小。如果使用拥有同代编码器却具有更强大CPU的配置，则能获得更大的速率。怀疑由于CPU瓶颈导致编码速率偏低的数据，在表中使用*标注。</p>
     <p>由于使用核显编码时更容易遇到3D瓶颈，核显编码速度可能比搭载同代编码器的独立显卡更慢。</p>
+    <p>测试视频为DJI 悟3与索尼FX3、FX6拍摄的的ProRes 422 HQ素材，包含大量复杂运动，细节极多，压缩难度较大，得到的VMAF分数相较于普通视频和电影的结果偏低。曲线主要反映不同编码器的相对质量，并不能作为视频压制码率选择的绝对参考。</p>
     <p><br></p>
     <p>素材来源：<a href="https://www.ysjf.com/material" target="_blank">影视飓风官网</a>&ensp;&ensp;&ensp;&ensp;流媒体：<a href="https://www.bilibili.com/video/BV1YmpRzEE38/" target="_blank">哔哩哔哩</a>&ensp;&ensp;<a href="https://youtu.be/OHoMmjgSc4U" target="_blank">YouTube</a></p>
     </div>
