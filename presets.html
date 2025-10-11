@@ -32,9 +32,9 @@
         }
 
         .intro-text-container {
-            width: 95%; /* 占用95%的父容器宽度 */
-            max-width: 800px; /* 设置最大宽度为800px */
-            margin: 0 auto 0px auto; /* 居中并增加底部间距 */
+            width: 95%; 
+            max-width: 800px; 
+            margin: 0 auto 0px auto; 
             padding: 15px;
             background-color: #222222; 
             border: 0 solid #555555; 
@@ -47,6 +47,18 @@
             margin: 0 0;
             color: #E0E0E0; 
             text-indent: 2em; 
+        }
+
+        .intro-text-container a:link,
+        .intro-text-container a:visited {
+            color: #E0E0E0 !important; 
+            text-decoration: underline; 
+        }
+
+        .intro-text-container a:hover,
+        .intro-text-container a:active {
+            color: #89CFF0 !important; 
+            text-decoration: underline; 
         }
 
         /* ------------------------------------------------ */
@@ -63,9 +75,8 @@
         }
 
         .nav-button {
-            /* 链接按钮的基本样式 */
             text-decoration: none;
-            color: #E0E0E0; /* 文本颜色 */
+            color: #E0E0E0; 
             background-color: #333333; 
             border: 2px solid #505050;
             padding: 5px 3px;
@@ -220,8 +231,10 @@
     <p>本实验在测完x265、SVT-AV1和VVenC后才进行VP9的测试，在预实验中发现VPX-VP9编码器的速度与VVenC几乎处于同一水平，而质量却显著低于x265，故不做测试。SVT-VP9编码器理论上能提供快于x265的速度，但发行版FFmpeg并没有原生支持该编码器，故也不进行测试。</p>
     <p>预设的选择：由于硬件编码和x264软件编码速度较快，故使用最慢的Preset并尽可能使用两次编码。而x265、 AV1、VVC的软件编码速度很慢，故采用质量尽可能接近最慢档时较快的Preset，x265使用slower而不是veryslow，AV1使用3而不是0，VVC使用slow而不是slower。</p>
     <p>所有视频均由使用Prores 422 HQ压缩的3840x2160 60fps HDR 10bit 422原片压制而来，故全部使用了 -pix_fmt yuv420p10le指令将其转为10bit 420 HDR。</p>
-    <p>由于CPU算力不足，软件解码ProRes速度小于编码器编码速度，第九代QSV编码器在Ultra 5 125H上和HEVC_AMF_4.0在Ryzen 7 7840H上的测得速率相比其极限速率偏小。如果使用拥有同代编码器却具有更强大CPU的配置，则能获得更大的速率。</p>
+    <p>由于CPU算力不足，软件解码ProRes速度小于编码器编码速度，第九代QSV编码器在Ultra 5 125H上和HEVC_AMF_4.0在Ryzen 7 7840H上的测得速率相比其极限速率偏小。如果使用拥有同代编码器却具有更强大CPU的配置，则能获得更大的速率。怀疑由于CPU瓶颈导致编码速率偏低的数据，在表中使用*标注。</p>
     <p>由于使用核显编码时更容易遇到3D瓶颈，核显编码速度可能比搭载同代编码器的独立显卡更慢。</p>
+    <p><br></p>
+    <p>素材来源：<a href="https://www.ysjf.com/material" target="_blank">影视飓风官网</a>&ensp;&ensp;&ensp;&ensp;流媒体：<a href="https://www.bilibili.com/video/BV1YmpRzEE38/" target="_blank">哔哩哔哩</a>&ensp;&ensp;<a href="https://youtu.be/OHoMmjgSc4U" target="_blank">YouTube</a></p>
     </div>
 
     <div class="nav-buttons-container">
